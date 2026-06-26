@@ -1,0 +1,16 @@
+package com.project.razorpay.common.enums;
+
+public enum PaymentStatus {
+    CREATED,
+    AUTHORIZING,
+    AUTHORIZED,
+    CAPTURING,
+    CAPTURED,
+    FAILED,
+    CANCELLED,
+    REFUNDING,
+    REFUNDED,
+    PARTIALLY_REFUNDED,
+    SETTLED,
+    AUTH_EXPIRED
+}
