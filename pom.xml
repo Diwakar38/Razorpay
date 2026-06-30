@@ -8,7 +8,7 @@
 		<version>4.0.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.codingshuttle</groupId>
+	<groupId>com.project</groupId>
 	<artifactId>razorpay</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
@@ -30,6 +30,10 @@
 		<java.version>25</java.version>
 	</properties>
 	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>

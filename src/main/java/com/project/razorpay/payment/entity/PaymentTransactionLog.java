@@ -4,16 +4,18 @@ import com.project.razorpay.common.enums.PaymentActor;
 import com.project.razorpay.common.enums.PaymentEvent;
 import com.project.razorpay.common.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(name = "payment_transaction_log")
 @Getter
 @Setter
-@Table(name = "payment_transaction_log")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class PaymentTransactionLog {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

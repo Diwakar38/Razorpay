@@ -1,38 +1,41 @@
 package com.project.razorpay.common.entity;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.util.Objects;
 
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
 @Embeddable
+@EqualsAndHashCode
 public class Money {
-    private int amountUnits;
+    private Integer amountUnits;
     private String currency;
 
-    public static Money of(int amountUnits, String currency) {
+    public static Money of(Integer amountUnits, String currency) {
         return new Money(amountUnits, currency);
     }
 
-    public static Money inr(int amount) {
+    public static Money inr(Integer amount) {
         return new Money(amount, "INR");
     }
 
-    public static Money usd(int amount) {
+    public static Money usd(Integer amount) {
         return new Money(amount, "USD");
     }
 
-    public static Money eur(int amount) {
+    public static Money eur(Integer amount) {
         return new Money(amount, "EUR");
     }
 
-    public static Money jpy(int amount) {
+    public static Money jpy(Integer amount) {
         return new Money(amount, "JPY");
     }
 
     public Money add(Money other) {
-        if (Objects.equals(this.currency, other.currency)) {
+        if (!this.currency.equals(other.currency)) {
             return new Money(this.amountUnits + other.amountUnits, this.currency);
         } else {
             throw new IllegalArgumentException("Cannot add money with different currencies");
@@ -40,7 +43,7 @@ public class Money {
     }
 
     public Money subtract(Money other) {
-        if (Objects.equals(this.currency, other.currency)) {
+        if (!this.currency.equals(other.currency)) {
             return new Money(this.amountUnits - other.amountUnits, this.currency);
         } else {
             throw new IllegalArgumentException("Cannot subtract money with different currencies");
