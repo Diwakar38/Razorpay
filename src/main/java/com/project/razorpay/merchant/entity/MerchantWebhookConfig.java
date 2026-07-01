@@ -6,7 +6,9 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "merchant_webhook_config")
+@Table(name = "merchant_webhook_config", indexes = {
+        @Index(name = "idx_webhook_merchant_id", columnList = "merchant_id, enabled")
+})
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,7 +20,7 @@ public class MerchantWebhookConfig {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
     @Column(name = "target_url", length = 500, nullable = false)
