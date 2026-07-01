@@ -2,7 +2,7 @@ package com.project.razorpay.merchant.dto.response;
 
 import java.util.UUID;
 
-public record CreateApiKeyResponse(
+public record ApiKeyCreateResponse(
         UUID id,
         String keyId,
         String keySecret,

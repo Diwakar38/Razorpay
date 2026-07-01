@@ -2,11 +2,12 @@ package com.project.razorpay.merchant.service.impl;
 
 import com.project.razorpay.common.exceptions.ResourceNotFoundException;
 import com.project.razorpay.common.util.RandomizerUtil;
-import com.project.razorpay.merchant.dto.request.CreateApiKeyRequest;
+import com.project.razorpay.merchant.dto.request.ApiKeyCreateRequest;
 import com.project.razorpay.merchant.dto.response.ApiKeyRespose;
-import com.project.razorpay.merchant.dto.response.CreateApiKeyResponse;
+import com.project.razorpay.merchant.dto.response.ApiKeyCreateResponse;
 import com.project.razorpay.merchant.entity.ApiKey;
 import com.project.razorpay.merchant.entity.Merchant;
+import com.project.razorpay.merchant.mapper.ApiKeyMapper;
 import com.project.razorpay.merchant.repository.ApiKeyRepository;
 import com.project.razorpay.merchant.repository.MerchantRepository;
 import com.project.razorpay.merchant.service.ApiKeyService;
@@ -25,10 +26,11 @@ import java.util.UUID;
 public class ApiKeyServiceImpl implements ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final MerchantRepository merchantRepository;
+    private final ApiKeyMapper apiKeyMapper;
 
     @Override
     @Transactional
-    public CreateApiKeyResponse createApiKey(UUID merchantId, CreateApiKeyRequest request) {
+    public ApiKeyCreateResponse createApiKey(UUID merchantId, ApiKeyCreateRequest request) {
         log.info("Creating API Key for merchant: {}", merchantId);
         Merchant merchant = merchantRepository.findById(merchantId)
                 .orElseThrow(() -> new ResourceNotFoundException("MERCHANT", merchantId));
@@ -46,20 +48,21 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
         apiKey = apiKeyRepository.save(apiKey);
 
-        return new CreateApiKeyResponse(apiKey.getId(), keyId, rawSecret, request.environment());
+        return new ApiKeyCreateResponse(apiKey.getId(), keyId, rawSecret, request.environment());
     }
 
     @Override
     public List<ApiKeyRespose> listByMerchant(UUID merchantId) {
-        return apiKeyRepository.findByMerchant_Id(merchantId).stream()
-                .map(apiKey -> new ApiKeyRespose(
-                        apiKey.getId(),
-                        apiKey.getKeyId(),
-                        apiKey.getEnvironment(),
-                        apiKey.isEnabled(),
-                        apiKey.getLastUsedAt(),
-                        null))
-                .toList();
+//        return apiKeyRepository.findByMerchant_Id(merchantId).stream()
+//                .map(apiKey -> new ApiKeyRespose(
+//                        apiKey.getId(),
+//                        apiKey.getKeyId(),
+//                        apiKey.getEnvironment(),
+//                        apiKey.isEnabled(),
+//                        apiKey.getLastUsedAt(),
+//                        null))
+//                .toList();
+        return apiKeyMapper.toApiKeyResponseList(apiKeyRepository.findByMerchant_Id(merchantId));
     }
 
     @Override
@@ -74,7 +77,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public CreateApiKeyResponse rotateKey(UUID merchantId, UUID keyId) {
+    public ApiKeyCreateResponse rotateKey(UUID merchantId, UUID keyId) {
         ApiKey apiKey = apiKeyRepository.findById(keyId)
                 .filter(k -> k.getMerchant().getId().equals(merchantId))
                 .orElseThrow(() -> new ResourceNotFoundException("Apikey", keyId));
@@ -88,6 +91,6 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setGracePeriodExpiresAt(LocalDateTime.now().plusHours(24));
         apiKey = apiKeyRepository.save(apiKey);
 
-        return new CreateApiKeyResponse(apiKey.getId(), apiKey.getKeyId(), apiKey.getKeySecretHash(), apiKey.getEnvironment());
+        return new ApiKeyCreateResponse(apiKey.getId(), apiKey.getKeyId(), apiKey.getKeySecretHash(), apiKey.getEnvironment());
     }
 }
