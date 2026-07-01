@@ -1,5 +1,6 @@
 package com.project.razorpay.payment.entity;
 
+import com.project.razorpay.common.entity.BaseEntity;
 import com.project.razorpay.common.enums.PaymentActor;
 import com.project.razorpay.common.enums.PaymentEvent;
 import com.project.razorpay.common.enums.PaymentStatus;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PaymentTransactionLog {
+public class PaymentTransactionLog extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
