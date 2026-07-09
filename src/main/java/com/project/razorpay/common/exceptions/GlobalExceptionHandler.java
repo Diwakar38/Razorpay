@@ -9,15 +9,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateResourceException.class)
-     public ResponseEntity<ErrorResponse> handleDuplicateResourceException(DuplicateResourceException ex) {
-         return ResponseEntity.status(HttpStatus.CONFLICT)
-                 .body(ErrorResponse.of(ex.getErrorCode(), ex.getMessage()));
-     }
+    public ResponseEntity<ErrorResponse> handleDuplicateResourceException(DuplicateResourceException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(ex.getErrorCode(), ex.getMessage()));
+    }
 
-     @ExceptionHandler(ResourceNotFoundException.class)
+    @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         String errorCode = ex.getResourceName().toUpperCase() + "_NOT_FOUND";
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(errorCode, ex.getMessage()));
-     }
+    }
+
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidStateTransitionException(InvalidStateTransitionException ex) {
+        String errorCode = ex.getToEvent() + "_NOT_REACHED";
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(errorCode, ex.getMessage()));
+    }
 }

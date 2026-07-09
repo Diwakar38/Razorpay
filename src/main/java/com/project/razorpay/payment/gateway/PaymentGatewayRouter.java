@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -20,5 +21,13 @@ public class PaymentGatewayRouter {
             throw new IllegalArgumentException("No payment adapter registered for method!!" + request.method());
         }
         return adapter.initiate(request);
+    }
+
+    public PaymentResult capture(PaymentMethod paymentMethod, UUID paymentId) {
+        PaymentAdapter adapter = paymentAdapters.get(paymentMethod);
+        if(adapter == null) {
+            throw new IllegalArgumentException("No payment adapter registered for method!!" + paymentMethod);
+        }
+        return adapter.capture(paymentId);
     }
 }
