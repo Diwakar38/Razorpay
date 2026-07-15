@@ -29,7 +29,9 @@ public class BankCallbackSimulator {
         LocalDateTime globalWindow = LocalDateTime.now().minusSeconds(1);
 
         List<Payment> candidate = paymentRepository
-                .findByStatusAndCreatedAt(PaymentStatus.AUTHORIZING, globalWindow);
+                .findByStatusAndCreatedAtBefore(PaymentStatus.AUTHORIZING, globalWindow);
+
+        log.info("Simulating payments for {} payments", candidate.size());
 
         if(candidate.isEmpty()) return;
 

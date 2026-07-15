@@ -4,14 +4,20 @@ import com.project.razorpay.common.util.RandomizerUtil;
 import com.project.razorpay.payment.processor.PaymentProcessor;
 import com.project.razorpay.payment.processor.dto.PaymentProcessRequest;
 import com.project.razorpay.payment.processor.dto.PaymentProcessResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
+@Component
+@Slf4j
+@RequiredArgsConstructor
 public class UpiPaymentProcessor implements PaymentProcessor {
     @Override
     public PaymentProcessResponse charge(PaymentProcessRequest request) {
         final String VPA_CODE_FAIL = "fail@oksbi";
 
         String bankCode = request.methodDetails() != null ?
-                request.methodDetails().get("BANK").toString() : null;
+                request.methodDetails().get("VPA").toString() : null;
 
         // Simulation
         if(VPA_CODE_FAIL.equals(bankCode)) {
@@ -19,7 +25,7 @@ public class UpiPaymentProcessor implements PaymentProcessor {
                                                       "Bank rejected the transaction registration");
         }
 
-        String processorRef = "NBK_PROCESSOR_" + RandomizerUtil.randomBase64(16);
+        String processorRef = "UPI_PROCESSOR_" + RandomizerUtil.randomBase64(16);
 
         String bankRef = "BANK_REF/" + RandomizerUtil.randomBase64(16);
 
