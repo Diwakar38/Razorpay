@@ -19,6 +19,9 @@ server:
 vault:
   master-key: sakldfjasdlkjfijwioeuorip098274098
 
+jwt:
+  secret-key: dont-use-in-prod-lskjdflksdjflsj1234kjlkjlkjsj;dlkfjsalkfjlkysoy
+
 payment:
   simulator:
     poll-interval-ms: 5000
