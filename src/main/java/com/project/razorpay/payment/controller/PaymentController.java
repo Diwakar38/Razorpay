@@ -1,5 +1,6 @@
 package com.project.razorpay.payment.controller;
 
+import com.project.razorpay.merchant.security.MerchantContext;
 import com.project.razorpay.payment.dto.request.PaymentInitRequest;
 import com.project.razorpay.payment.dto.response.PaymentResponse;
 import com.project.razorpay.payment.service.PaymentService;
@@ -16,18 +17,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
-
-    private final UUID merchantId = UUID.fromString("e23bac60-26dc-49b0-a7f1-a9fb4eea3ca8");
+    private final MerchantContext merchantContext;
 
     @PostMapping
     public ResponseEntity<PaymentResponse> initiate(@RequestBody @Valid PaymentInitRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(paymentService.initiate(merchantId, request));
+                .body(paymentService.initiate(merchantContext.getMerchantId(), request));
     }
 
     @PostMapping("/{paymentId}/capture")
     public ResponseEntity<PaymentResponse> capture(@PathVariable UUID paymentId) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(paymentService.capture(merchantId, paymentId));
+                .body(paymentService.capture(merchantContext.getMerchantId(), paymentId));
     }
 }
