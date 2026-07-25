@@ -3,6 +3,7 @@ package com.project.razorpay.merchant.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,6 +25,7 @@ public class WebSecurityConfig {
     private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
+    @Order(1)
     public SecurityFilterChain jwtChain(HttpSecurity http) {
         return http
                 .securityMatcher(JWT_ROUTES)
@@ -38,6 +40,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    @Order(2)
     public SecurityFilterChain apiKeyChain(HttpSecurity http) {
         return http
                 .securityMatcher(API_KEY_ROUTES)

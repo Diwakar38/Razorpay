@@ -3,6 +3,7 @@ package com.project.razorpay.vault.dto.request;
 import com.project.razorpay.vault.validation.ExpiryYear;
 import jakarta.validation.constraints.*;
 import org.hibernate.validator.constraints.LuhnCheck;
+import org.hibernate.validator.constraints.Range;
 
 import java.util.UUID;
 
@@ -16,12 +17,11 @@ public record TokenizeRequest(
         @Pattern(regexp = "^[0-9]{3,4}$", message = "CVV length is invalid")
         String cvv,
 
-        @NotBlank(message = "Expiry month is required")
-        @Min(value = 1, message = "Expiry month must be between 1 to 12")
-        @Max(value = 12, message = "Expiry month must be between 1 to 12")
+        @NotNull(message = "Expiry month is required")
+        @Range(min = 1, max = 12, message = "Expiry month should be between 1 and 12")
         Integer expiryMonth,
 
-        @NotBlank(message = "Expiry year is required")
+        @NotNull(message = "Expiry year is required")
         @ExpiryYear
         Integer expiryYear,
 
