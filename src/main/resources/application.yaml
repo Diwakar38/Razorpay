@@ -5,6 +5,11 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/Razorpay}
     username: ${DB_USER:diwakar}
     password: ${DB_PW:diwakar}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      pasword: ${REDIS_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
@@ -39,3 +44,10 @@ payment:
         min-delay-seconds: 4
         max-delay-seconds: 10
         success-rate: 85
+
+app:
+  rate-limit:
+    method: fixed
+    use-case:
+      api-key:
+        requests-per-minute: 2

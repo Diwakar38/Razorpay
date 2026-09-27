@@ -6,18 +6,54 @@ services:
     environment:
       POSTGRES_USER: diwakar
       POSTGRES_PASSWORD: diwakar
-      POSTGRES_DB: CodingShuttle
+      POSTGRES_DB: Razorpay
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "diwakar", "-d", "CodingShuttle"]
+      test: ["CMD", "pg_isready", "-U", "diwakar", "-d", "Razorpay"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zedis:
+    image: vicanso/zedis-web:latest
+    container_name: zedis
+    restart: unless-stopped
+    ports:
+      - "7379:7379"
+    environment:
+      ZEDIS_BRIDGE_USERS: admin@change-me
+    volumes:
+      - zedis_data:/data
+    command:
+      - --listen
+      - 0.0.0.0:7379
+      - --insecure-cookie
+
 volumes:
   postgres_data:
+    driver: local
+
+  redis_data:
+    driver: local
+
+  zedis_data:
     driver: local

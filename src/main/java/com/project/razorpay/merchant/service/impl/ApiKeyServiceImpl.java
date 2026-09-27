@@ -2,6 +2,8 @@ package com.project.razorpay.merchant.service.impl;
 
 import com.project.razorpay.common.exceptions.ResourceNotFoundException;
 import com.project.razorpay.common.util.RandomizerUtil;
+import com.project.razorpay.merchant.cache.ApiKeyCache;
+import com.project.razorpay.merchant.cache.ApiKeyCacheEntry;
 import com.project.razorpay.merchant.dto.request.ApiKeyCreateRequest;
 import com.project.razorpay.merchant.dto.response.ApiKeyRespose;
 import com.project.razorpay.merchant.dto.response.ApiKeyCreateResponse;
@@ -29,6 +31,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     private final MerchantRepository merchantRepository;
     private final ApiKeyMapper apiKeyMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+    private final ApiKeyCache apiKeyCache;
 
     @Override
     @Transactional
@@ -49,6 +52,18 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .build();
 
         apiKey = apiKeyRepository.save(apiKey);
+
+        ApiKeyCacheEntry apiKeyCacheEntry = new ApiKeyCacheEntry(
+                apiKey.getKeyId(),
+                apiKey.getKeySecretHash(),
+                apiKey.getPreviousKeySecretHash(),
+                apiKey.getGracePeriodExpiresAt(),
+                apiKey.getMerchant().getId(),
+                apiKey.getEnvironment(),
+                apiKey.isEnabled()
+        );
+
+        apiKeyCache.put(apiKey.getKeyId(), apiKeyCacheEntry);
 
         return new ApiKeyCreateResponse(apiKey.getId(), keyId, rawSecret, request.environment());
     }
@@ -75,6 +90,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .orElseThrow(() -> new ResourceNotFoundException("Apikey", keyId));
         key.setEnabled(false);
         apiKeyRepository.save(key);
+        apiKeyCache.evict(key.getKeyId());
     }
 
     @Override
@@ -92,6 +108,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setRotatedAt(LocalDateTime.now());
         apiKey.setGracePeriodExpiresAt(LocalDateTime.now().plusHours(24));
         apiKey = apiKeyRepository.save(apiKey);
+
+        apiKeyCache.evict(apiKey.getKeyId());
 
         return new ApiKeyCreateResponse(apiKey.getId(), apiKey.getKeyId(), apiKey.getKeySecretHash(), apiKey.getEnvironment());
     }

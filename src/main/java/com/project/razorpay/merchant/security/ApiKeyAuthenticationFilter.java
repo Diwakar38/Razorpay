@@ -1,5 +1,10 @@
 package com.project.razorpay.merchant.security;
 
+import com.project.razorpay.common.exceptions.RateLimitException;
+import com.project.razorpay.common.ratelimit.RateLimitResult;
+import com.project.razorpay.common.ratelimit.RateLimiter;
+import com.project.razorpay.merchant.cache.ApiKeyCache;
+import com.project.razorpay.merchant.cache.ApiKeyCacheEntry;
 import com.project.razorpay.merchant.entity.ApiKey;
 import com.project.razorpay.merchant.repository.ApiKeyRepository;
 import jakarta.servlet.FilterChain;
@@ -9,33 +14,36 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String BASIC = "Basic ";
     private final ApiKeyRepository apiKeyRepository;
-    private static String BASIC = "Basic ";
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     private final MerchantContext merchantContext;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final ApiKeyCache apiKeyCache;
+    private final RateLimiter rateLimiter;
+
+    @Value("${app.rate-limit.use-case.api-key.requests-per-minute:60}")
+    private Integer rpm;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -58,12 +66,27 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             String keyId = credentials[0];
             String rawSecret = credentials[1];
 
-            ApiKey apiKey = apiKeyRepository.findByKeyId(keyId)
-                    .orElseThrow(() -> new BadCredentialsException("Invalid or Missing API_KEY"));
 
-            if (!apiKey.isEnabled() || !secretMatches(rawSecret, apiKey)) {
+//            ApiKey apiKey = apiKeyRepository.findByKeyId(keyId)
+//                    .orElseThrow(() -> new BadCredentialsException("Invalid or Missing API_KEY"));
+
+            ApiKeyCacheEntry apiKeyCacheEntry = apiKeyCache.get(keyId)
+                    .orElseGet(() -> loadAndCache(keyId));
+
+
+            if (apiKeyCacheEntry == null || !apiKeyCacheEntry.enabled() || !secretMatches(rawSecret, apiKeyCacheEntry)) {
                 throw new BadRequestException("Invalid or missing API_KEY");
             }
+
+            RateLimitResult rateLimitResult = rateLimiter.check(apiKeyCacheEntry.keyId(), rpm, 60);
+
+            if(!rateLimitResult.isAllowed()) {
+                log.warn("Too many requests for key: {}", keyId);
+                throw new RateLimitException("Too many requests", rateLimitResult.retryAfterSeconds());
+            }
+
+            response.setHeader("X-RateLimit-Limit", String.valueOf(rpm));
+            response.setHeader("X-RateLimit-Remaining", String.valueOf(rateLimitResult.remaining()));
 
             var auth = new UsernamePasswordAuthenticationToken
                     (keyId, null,
@@ -71,8 +94,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                     );
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            merchantContext.setMerchantId(apiKey.getMerchant().getId());
-            merchantContext.setKeyId((apiKey.getKeyId()));
+            merchantContext.setMerchantId(apiKeyCacheEntry.merchantId());
+            merchantContext.setKeyId((apiKeyCacheEntry.keyId()));
 
             filterChain.doFilter(request, response);
         } catch (Exception e) {
@@ -80,24 +103,39 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private boolean secretMatches(String rawSecret, ApiKey apiKey) {
-        if(bCryptPasswordEncoder.matches(rawSecret, apiKey.getKeySecretHash())) {
+    private ApiKeyCacheEntry loadAndCache(String keyId) {
+            ApiKey apiKey = apiKeyRepository.findByKeyId(keyId).orElse(null);
+            if(apiKey == null) return null;
+            ApiKeyCacheEntry apiKeyCacheEntry = new ApiKeyCacheEntry(
+                    apiKey.getKeyId(),
+                    apiKey.getKeySecretHash(),
+                    apiKey.getPreviousKeySecretHash(),
+                    apiKey.getGracePeriodExpiresAt(),
+                    apiKey.getMerchant().getId(),
+                    apiKey.getEnvironment(),
+                    apiKey.isEnabled()
+            );
+
+            apiKeyCache.put(keyId, apiKeyCacheEntry);
+            return apiKeyCacheEntry;
+    }
+
+    private boolean secretMatches(String rawSecret, ApiKeyCacheEntry apiKeyCacheEntry) {
+        if (bCryptPasswordEncoder.matches(rawSecret, apiKeyCacheEntry.keySecretHash())) {
             return true;
         }
-        boolean isInGracePeriod = apiKey.getGracePeriodExpiresAt() != null &&
-                LocalDateTime.now().isBefore(apiKey.getGracePeriodExpiresAt());
 
-        return isInGracePeriod &&
-                apiKey.getPreviousKeySecretHash() != null &&
-                bCryptPasswordEncoder.matches(rawSecret, apiKey.getPreviousKeySecretHash());
+        return apiKeyCacheEntry.isInGracePeriod() &&
+                apiKeyCacheEntry.previousKeySecretHash() != null &&
+                bCryptPasswordEncoder.matches(rawSecret, apiKeyCacheEntry.previousKeySecretHash());
     }
 
     private String[] decode(String header) {
         String encoded = header.substring(BASIC.length());
         String decoded = new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8);
         int colon = decoded.indexOf(":");
-        if(colon < 1) return null;
+        if (colon < 1) return null;
 
-        return new String[]{decoded.substring(0,colon),decoded.substring(colon+1)};
+        return new String[]{decoded.substring(0, colon), decoded.substring(colon + 1)};
     }
 }
