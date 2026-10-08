@@ -97,7 +97,7 @@ public class PaymentServiceImpl implements PaymentService {
         order = orderRepository.save(order);
 
         // TODO: Send an outbox (kafka event)
-        eventPublisher.publish(EventAggregateType.PAYMENT, payment.getId(), "PAYMENT_CREATED",
+        eventPublisher.publish(EventAggregateType.PAYMENTS, payment.getId(), "PAYMENT_CREATED",
                                Map.of("orderId", order.getId().toString(),
                                       "paymentId", payment.getId().toString(),
                                       "merchantId", merchantId.toString(),
@@ -142,7 +142,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment = paymentRepository.save(payment);
 
         // TODO: Send an outbox (kafka event)
-        eventPublisher.publish(EventAggregateType.PAYMENT, payment.getId(), "PAYMENT_STATUS_CHANGED",
+        eventPublisher.publish(EventAggregateType.PAYMENTS, payment.getId(), "PAYMENT_STATUS_CHANGED",
                                Map.of("orderId", payment.getOrder().getId().toString(),
                                       "paymentId", payment.getId().toString(),
                                       "merchantId", payment.getMerchantId().toString(),
@@ -203,7 +203,7 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
         orderRepository.save(orderRecord);
         // TODO: Send an outbox (kafka event)
-        eventPublisher.publish(EventAggregateType.PAYMENT, payment.getId(), "PAYMENT_STATUS_CHANGED",
+        eventPublisher.publish(EventAggregateType.PAYMENTS, payment.getId(), "PAYMENT_STATUS_CHANGED",
                                Map.of("orderId", payment.getOrder().getId().toString(),
                                       "paymentId", payment.getId().toString(),
                                       "merchantId", payment.getMerchantId().toString(),

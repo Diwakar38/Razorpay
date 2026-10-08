@@ -3,6 +3,7 @@ package com.project.razorpay.operations.entity;
 import com.project.razorpay.common.entity.BaseEntity;
 import com.project.razorpay.common.enums.WebHookEventStatus;
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -12,6 +13,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "webhook_event")
+@Getter
+@Setter
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Builder
 public class WebhookEvent extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -38,6 +44,7 @@ public class WebhookEvent extends BaseEntity {
     private WebHookEventStatus status;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer attempts = 0;
 
     private LocalDateTime nextRetryAt;

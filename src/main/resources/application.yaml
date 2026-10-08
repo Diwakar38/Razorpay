@@ -1,15 +1,22 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+
   application:
     name: Razorpay
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/Razorpay}
     username: ${DB_USER:diwakar}
     password: ${DB_PW:diwakar}
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       pasword: ${REDIS_PASSWORD:}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,6 +26,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   kafka:
+    listener:
+      ack-mode: manual
     bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
     producer:
       acks: all
@@ -75,7 +84,12 @@ app:
         requests-per-minute: 20
   kafka:
     topics:
-      payment: payments.events
-      order: orders.events
-      refund: refund.events
-      settlement: settlement.events
+      payments: payments.events
+      orders: orders.events
+      refunds: refunds.events
+      settlements: settlements.events
+
+  webhook:
+    delivery:
+      redis-key: "webhook-retry"
+      poll-batch-size: 100

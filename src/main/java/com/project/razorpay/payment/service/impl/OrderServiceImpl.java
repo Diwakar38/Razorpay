@@ -73,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
         order = orderRepository.save(order);
 
         // TODO: Send kafka notification that the order is created
-        eventPublisher.publish(EventAggregateType.ORDER, order.getId(), "ORDER_CREATED",
+        eventPublisher.publish(EventAggregateType.ORDERS, order.getId(), "ORDER_CREATED",
                                Map.of("orderId", order.getId().toString(),
                                       "merchantId", merchantId.toString(),
                                       "orderStatus", order.getOrderStatus().name(),
@@ -125,7 +125,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(OrderStatus.CANCELLED);
         order = orderRepository.save(order);
 
-        eventPublisher.publish(EventAggregateType.ORDER, order.getId(), "ORDER_CANCELLED",
+        eventPublisher.publish(EventAggregateType.ORDERS, order.getId(), "ORDER_CANCELLED",
                                Map.of("orderId", order.getId().toString(),
                                       "merchantId", merchantId.toString(),
                                       "orderStatus", order.getOrderStatus().name(),
